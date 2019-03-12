@@ -22,7 +22,7 @@ touch /media/mmcblk0p2/data/usr/bin/fang-ir-control.sh
 chmod 755 /media/mmcblk0p2/data/usr/bin/fang-ir-control.sh
 
 vi /media/mmcblk0p2/data/usr/bin/fang-ir-control.sh
-##### Paste start next line #####
+########### BEGIN Paste start next line #####
 #!/bin/sh
 
 echo "IR script started"
@@ -73,13 +73,13 @@ do
         fi
         sleep 3
 done
-############### END COPY FILE ####################
+############### END Paste ####################
 
 touch /media/mmcblk0p2/data/usr/bin/rtsp-check.sh
 chmod 755 /media/mmcblk0p2/data/usr/bin/rtsp-check.sh
 vi /media/mmcblk0p2/data/usr/bin/rtsp-check.sh
 i
-##### Paste start next line #####
+########### BEGIN Paste start next line #####
 #!/bin/sh
  
 while true; do
@@ -92,14 +92,14 @@ fi
 sleep 2
 done
 
-############### END COPY FILE ####################
+############### END Paste ####################
 
 touch /media/mmcblk0p2/data/etc/scripts/99-rtsp-check
 chmod 755 /media/mmcblk0p2/data/etc/scripts/99-rtsp-check
 vi /media/mmcblk0p2/data/etc/scripts/99-rtsp-check
 i
 
-##### Paste start next line #####
+########### BEGIN Paste start next line #####
 #!/bin/sh
 PIDFILE="/var/run/rtsp-check.pid"
  
@@ -134,4 +134,4 @@ else
     ;;
   esac
 fi
-############### END COPY FILE ####################
+############### END Paste ####################
