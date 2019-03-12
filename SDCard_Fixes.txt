@@ -1,0 +1,137 @@
+http://[ip address]/cgi-bin/status
+Start rescue telnetd
+
+
+Telnet to device: 2323
+Username: root
+Password: ismart12
+
+###Change Resolution
+vi /media/mmcblk0p2/data/etc/scripts/20-rtsp-server
+
+snx_rtsp_server -W 1280 -H 720 -Q 10 -b 2048 -a >$LOG 2>&1 &
+
+##or Reduce framerate
+snx_rtsp_server -W 1280 -H 720 -Q 10 -F 15 -b 2048 -a >$LOG 2>&1 &
+
+
+### Fix Overheating
+mv /media/mmcblk0p2/data/usr/bin/fang-ir-control.sh /media/mmcblk0p2/data/usr/bin/fang-ir-control.sh.backup
+
+touch /media/mmcblk0p2/data/usr/bin/fang-ir-control.sh
+chmod 755 /media/mmcblk0p2/data/usr/bin/fang-ir-control.sh
+
+vi /media/mmcblk0p2/data/usr/bin/fang-ir-control.sh
+##### Paste start next line #####
+#!/bin/sh
+
+echo "IR script started"
+# ir_init
+gpio_ms1 -n 2 -m 1 -v 1
+gpio_aud write 1 1 0
+gpio_aud write 0 2 1
+gpio_aud write 1 0 0
+
+sleep 1
+gpio_ms1 -n 2 -m 1 -v 0
+
+echo 0x40 > /proc/isp/filter/saturation
+
+sleep 3
+
+# ir loop
+IR_ON=0
+
+while :
+do
+        DAY="$(gpio_aud read 2)"
+        if [ $DAY -eq 1 ]
+        then
+                if [ $IR_ON -eq 1 ]
+                then
+#                        gpio_ms1 -n 2 -m 1 -v 1
+                        gpio_aud write 1 0 0
+                        echo 0x40 > /proc/isp/filter/saturation
+                        IR_ON=0
+
+                        # wait a second and then disable the output to the solenoid to reduce power use!
+                        sleep 1
+                        gpio_ms1 -n 2 -m 1 -v 0
+                fi
+        else
+                if [ $IR_ON -eq 0 ]
+                then
+                       echo 0x0 > /proc/isp/filter/saturation
+                        gpio_aud write 1 0 1
+#                        gpio_ms1 -n 2 -m 1 -v 0
+                        IR_ON=1
+
+                        # wait a second and then disable the output to the solenoid to reduce power use!
+                        sleep 1
+                        gpio_ms1 -n 2 -m 1 -v 1
+                fi
+        fi
+        sleep 3
+done
+############### END COPY FILE ####################
+
+touch /media/mmcblk0p2/data/usr/bin/rtsp-check.sh
+chmod 755 /media/mmcblk0p2/data/usr/bin/rtsp-check.sh
+vi /media/mmcblk0p2/data/usr/bin/rtsp-check.sh
+i
+##### Paste start next line #####
+#!/bin/sh
+ 
+while true; do
+if pgrep -x "snx_rtsp_server" > /dev/null
+then
+    :
+else
+    /media/mmcblk0p2/data/etc/scripts/20-rtsp-server start
+fi
+sleep 2
+done
+
+############### END COPY FILE ####################
+
+touch /media/mmcblk0p2/data/etc/scripts/99-rtsp-check
+chmod 755 /media/mmcblk0p2/data/etc/scripts/99-rtsp-check
+vi /media/mmcblk0p2/data/etc/scripts/99-rtsp-check
+i
+
+##### Paste start next line #####
+#!/bin/sh
+PIDFILE="/var/run/rtsp-check.pid"
+ 
+status()
+{
+  pid="$(cat "$PIDFILE" 2>/dev/null)"
+  if [ "$pid" ]; then
+    kill -0 "$pid" >/dev/null && echo "PID: $pid" || return 1
+  fi
+}
+ 
+start()
+{
+  echo "Starting rtsp-check script..."
+  rtsp-check.sh </dev/null >/dev/null 2>&1 &
+  echo "$!" > "$PIDFILE"
+}
+ 
+stop()
+{
+  pid="$(cat "$PIDFILE" 2>/dev/null)"
+  if [ "$pid" ]; then
+     kill $pid || rm "$PIDFILE"
+  fi
+}
+ 
+if [ $# -eq 0 ]; then
+  start
+else
+  case $1 in start|stop|status)
+    $1
+    ;;
+  esac
+fi
+############### END COPY FILE ####################
